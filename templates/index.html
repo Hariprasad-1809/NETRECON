@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>NetRecon Pro — Kali Linux Dashboard</title>
+<style>
+:root{
+  --bg:#07090f;--surface:#0f1623;--card:#131c2e;--border:#1a2740;
+  --accent:#00d4ff;--green:#00ff88;--red:#ff4560;--yellow:#ffd166;
+  --orange:#f77f00;--text:#e2e8f0;--muted:#4a5568;
+  --mono:'Courier New',monospace;--sans:'Segoe UI',Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;}
+
+/* HEADER */
+header{background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 1.5rem;height:56px;display:flex;align-items:center;
+  justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{font-family:var(--mono);font-size:1rem;color:var(--accent);letter-spacing:3px;}
+.logo span{color:var(--green);}
+.hdr-right{display:flex;gap:1.5rem;align-items:center;font-size:0.75rem;
+  color:var(--muted);font-family:var(--mono);}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);
+  display:inline-block;margin-right:5px;animation:blink 1.4s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 56px);}
+
+/* SIDEBAR */
+aside{background:var(--surface);border-right:1px solid var(--border);padding:1rem 0;}
+.nav-grp{margin-bottom:1.2rem;}
+.nav-lbl{font-size:.6rem;color:var(--muted);letter-spacing:2px;
+  text-transform:uppercase;padding:0 1rem;margin-bottom:.4rem;}
+.nav-item{display:flex;align-items:center;gap:.6rem;padding:.55rem 1rem;
+  font-size:.82rem;color:var(--muted);cursor:pointer;
+  border-left:3px solid transparent;transition:all .15s;}
+.nav-item:hover{background:rgba(0,212,255,.05);color:var(--text);}
+.nav-item.active{background:rgba(0,212,255,.08);color:var(--accent);border-left-color:var(--accent);}
+.nav-ico{font-size:.95rem;width:18px;}
+.nbadge{margin-left:auto;background:var(--red);color:#fff;
+  font-size:.6rem;padding:1px 6px;border-radius:10px;font-family:var(--mono);}
+.nbadge.g{background:rgba(0,255,136,.15);color:var(--green);}
+.nbadge.y{background:rgba(255,209,102,.15);color:var(--yellow);}
+
+/* MAIN */
+.main{padding:1.5rem;overflow-y:auto;}
+.panel{display:none;}
+.panel.active{display:block;}
+.page-title{font-size:1.25rem;font-weight:700;margin-bottom:.2rem;}
+.page-sub{font-size:.78rem;color:var(--muted);margin-bottom:1.5rem;}
+
+/* STAT CARDS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem;margin-bottom:1.5rem;}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:7px;padding:1rem;}
+.stat-lbl{font-size:.65rem;color:var(--muted);text-transform:uppercase;
+  letter-spacing:1px;margin-bottom:.4rem;}
+.stat-val{font-size:1.8rem;font-weight:700;font-family:var(--mono);}
+.stat-sub{font-size:.7rem;color:var(--muted);margin-top:.2rem;}
+.ca{color:var(--accent)} .cg{color:var(--green)} .cr{color:var(--red)} .cy{color:var(--yellow)}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:7px;
+  overflow:hidden;margin-bottom:1.2rem;}
+.card-hdr{padding:.8rem 1rem;border-bottom:1px solid var(--border);
+  font-size:.82rem;font-weight:600;display:flex;align-items:center;
+  justify-content:space-between;gap:.5rem;}
+
+/* TERMINAL */
+.term{background:#04060a;border:1px solid var(--border);border-radius:7px;
+  padding:.9rem 1rem;font-family:var(--mono);font-size:.76rem;line-height:1.9;
+  overflow-x:auto;white-space:pre-wrap;word-break:break-all;
+  max-height:420px;overflow-y:auto;margin-bottom:1.2rem;}
+.term .cmd{color:var(--green);}
+.term .info{color:var(--accent);}
+.term .warn{color:var(--yellow);}
+.term .err{color:var(--red);}
+.term .out{color:#6b7e99;}
+
+/* SCAN FORM */
+.scan-form{background:var(--card);border:1px solid var(--border);
+  border-radius:7px;padding:1.2rem;margin-bottom:1.2rem;}
+.form-row{display:flex;gap:.8rem;flex-wrap:wrap;align-items:flex-end;}
+.fg{display:flex;flex-direction:column;gap:.35rem;flex:1;min-width:140px;}
+label{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+input,select{background:var(--surface);border:1px solid var(--border);border-radius:5px;
+  color:var(--text);padding:.48rem .7rem;font-family:var(--mono);font-size:.8rem;
+  outline:none;transition:border-color .15s;}
+input:focus,select:focus{border-color:var(--accent);}
+
+/* BUTTONS */
+.btn{padding:.45rem 1rem;border-radius:5px;font-size:.78rem;
+  font-family:var(--mono);cursor:pointer;border:none;transition:all .15s;font-weight:600;}
+.btn-p{background:var(--accent);color:#000;}
+.btn-p:hover{background:#00b8d9;}
+.btn-p:disabled{background:#1a3040;color:var(--muted);cursor:not-allowed;}
+.btn-g{background:var(--green);color:#000;}
+.btn-g:hover{background:#00d974;}
+.btn-g:disabled{background:#0a2018;color:var(--muted);cursor:not-allowed;}
+.btn-r{background:var(--red);color:#fff;}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+
+/* PROGRESS */
+.prog-wrap{margin-top:.8rem;display:none;}
+.prog-lbl{font-size:.7rem;color:var(--muted);font-family:var(--mono);margin-bottom:4px;}
+.prog-track{background:var(--surface);border-radius:4px;height:5px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--accent);border-radius:4px;
+  width:0%;transition:width .4s;animation:scan-pulse 1.5s infinite;}
+@keyframes scan-pulse{0%,100%{opacity:1}50%{opacity:.6}}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;}
+th{padding:.55rem 1rem;font-size:.65rem;color:var(--muted);
+  text-transform:uppercase;letter-spacing:1px;text-align:left;
+  border-bottom:1px solid var(--border);background:rgba(0,0,0,.2);}
+td{padding:.65rem 1rem;font-size:.78rem;border-bottom:1px solid rgba(26,39,64,.5);
+  font-family:var(--mono);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(0,212,255,.02);}
+
+/* CHIPS */
+.chip{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;
+  border-radius:20px;font-size:.68rem;font-family:var(--mono);}
+.chip-up{background:rgba(0,255,136,.1);color:var(--green);}
+.chip-down{background:rgba(255,69,96,.1);color:var(--red);}
+.chip-warn{background:rgba(255,209,102,.1);color:var(--yellow);}
+.chip-info{background:rgba(0,212,255,.1);color:var(--accent);}
+.chip-crit{background:rgba(255,69,96,.15);color:#ff1a3a;border:1px solid rgba(255,69,96,.3);}
+
+/* PORT GRID */
+.port-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:.65rem;padding:1rem;}
+.port-card{background:var(--surface);border:1px solid var(--border);border-radius:6px;
+  padding:.8rem .9rem;cursor:default;transition:border-color .15s;}
+.port-card:hover{border-color:var(--accent);}
+.port-num{font-family:var(--mono);font-size:1.05rem;font-weight:700;color:var(--accent);}
+.port-svc{font-size:.74rem;color:var(--muted);margin-top:2px;}
+.port-ver{font-size:.68rem;color:#4a5568;margin-top:3px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.port-risk{font-size:.65rem;margin-top:5px;}
+
+/* 2-COL */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;}
+
+/* FINDING */
+.finding{background:var(--card);border:1px solid var(--border);
+  border-left:3px solid;border-radius:6px;padding:.9rem 1rem;margin-bottom:.65rem;}
+.finding.critical{border-left-color:var(--red);}
+.finding.high{border-left-color:var(--orange);}
+.finding.medium{border-left-color:var(--yellow);}
+.finding.low{border-left-color:var(--green);}
+.finding.info{border-left-color:var(--accent);}
+.f-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.35rem;}
+.f-title{font-size:.86rem;font-weight:600;}
+.f-body{font-size:.76rem;color:#7a8fa8;line-height:1.6;}
+.f-meta{font-size:.68rem;color:var(--muted);margin-top:.35rem;font-family:var(--mono);}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--surface);
+  border:1px solid var(--green);color:var(--green);padding:.65rem 1.1rem;
+  border-radius:7px;font-family:var(--mono);font-size:.78rem;
+  transform:translateY(80px);opacity:0;transition:all .3s;z-index:999;}
+.toast.show{transform:translateY(0);opacity:1;}
+
+/* PROTO BAR */
+.pbar{margin-bottom:.9rem;}
+.pbar-lbl{display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:3px;}
+.pbar-track{background:var(--surface);border-radius:3px;height:7px;overflow:hidden;}
+.pbar-fill{height:100%;border-radius:3px;transition:width 1.2s ease;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+/* ALERT */
+.alert{padding:.7rem 1rem;border-radius:6px;font-size:.78rem;
+  margin-bottom:1rem;font-family:var(--mono);}
+.alert-warn{background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.3);color:var(--yellow);}
+.alert-info{background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.3);color:var(--accent);}
+.alert-err{background:rgba(255,69,96,.08);border:1px solid rgba(255,69,96,.3);color:var(--red);}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">NET<span>RECON</span> PRO</div>
+  <div class="hdr-right">
+    <span><span class="dot"></span>KALI LINUX</span>
+    <span id="clock">00:00:00</span>
+    <span id="scan-badge" style="color:var(--muted)">● IDLE</span>
+  </div>
+</header>
+
+<div class="layout">
+<aside>
+  <div class="nav-grp">
+    <div class="nav-lbl">Dashboard</div>
+    <div class="nav-item active" onclick="tab('home',this)">
+      <span class="nav-ico">📊</span> Overview
+    </div>
+  </div>
+  <div class="nav-grp">
+    <div class="nav-lbl">Nmap Tools</div>
+    <div class="nav-item" onclick="tab('scan',this)">
+      <span class="nav-ico">🔍</span> Run Scan
+    </div>
+    <div class="nav-item" onclick="tab('hosts',this)">
+      <span class="nav-ico">🖥️</span> Live Hosts
+      <span class="nbadge g" id="badge-hosts">0</span>
+    </div>
+    <div class="nav-item" onclick="tab('ports',this)">
+      <span class="nav-ico">🔌</span> Open Ports
+      <span class="nbadge y" id="badge-ports">0</span>
+    </div>
+  </div>
+  <div class="nav-grp">
+    <div class="nav-lbl">Wireshark</div>
+    <div class="nav-item" onclick="tab('capture',this)">
+      <span class="nav-ico">📡</span> Capture Traffic
+    </div>
+    <div class="nav-item" onclick="tab('analyze',this)">
+      <span class="nav-ico">🔬</span> Analyze Packets
+    </div>
+  </div>
+  <div class="nav-grp">
+    <div class="nav-lbl">Report</div>
+    <div class="nav-item" onclick="tab('findings',this)">
+      <span class="nav-ico">⚠️</span> Findings
+      <span class="nbadge" id="badge-findings">0</span>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+
+<!-- HOME -->
+<div class="panel active" id="p-home">
+  <div class="page-title">Reconnaissance Dashboard</div>
+  <div class="page-sub">Real-time results from Nmap + Wireshark — Kali Linux</div>
+
+  <div class="alert alert-warn">
+    ⚠ Run as root for full scan capabilities: <code>sudo python3 app.py</code>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-lbl">Live Hosts</div>
+      <div class="stat-val ca" id="st-hosts">—</div>
+      <div class="stat-sub">discovered by nmap</div></div>
+    <div class="stat"><div class="stat-lbl">Open Ports</div>
+      <div class="stat-val cy" id="st-ports">—</div>
+      <div class="stat-sub">across all targets</div></div>
+    <div class="stat"><div class="stat-lbl">Critical Risks</div>
+      <div class="stat-val cr" id="st-crit">—</div>
+      <div class="stat-sub">require action</div></div>
+    <div class="stat"><div class="stat-lbl">Last Scan</div>
+      <div class="stat-val" style="font-size:.85rem;color:var(--muted)" id="st-time">Never</div>
+      <div class="stat-sub">scan time</div></div>
+  </div>
+
+  <div class="two">
+    <div>
+      <div class="card-hdr" style="background:var(--card);border-radius:7px 7px 0 0;
+        border:1px solid var(--border);border-bottom:none;">
+        🖥️ Quick Host Summary
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th>IP</th><th>Hostname</th><th>Ports</th><th>Risk</th></tr></thead>
+          <tbody id="home-hosts"><tr><td colspan="4" style="color:var(--muted);text-align:center;
+            padding:2rem">Run a scan to see results</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="card-hdr" style="background:var(--card);border-radius:7px 7px 0 0;
+        border:1px solid var(--border);border-bottom:none;">
+        🔴 Top Findings
+      </div>
+      <div id="home-findings" style="color:var(--muted);font-size:.8rem;
+        text-align:center;padding:2rem">
+        No findings yet — run a scan
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCAN -->
+<div class="panel" id="p-scan">
+  <div class="page-title">Nmap Scanner</div>
+  <div class="page-sub">Executes real nmap commands and streams output live</div>
+
+  <div class="scan-form">
+    <div class="form-row">
+      <div class="fg">
+        <label>Target IP / Range</label>
+        <input id="s-target" value="192.168.1.0/24" placeholder="e.g. 192.168.1.105"/>
+      </div>
+      <div class="fg">
+        <label>Scan Type</label>
+        <select id="s-type">
+          <option value="ping">Ping Sweep  (-sn)</option>
+          <option value="syn">SYN Stealth (-sS) [root]</option>
+          <option value="version" selected>Version     (-sV)</option>
+          <option value="os">OS + Version(-sV -O) [root]</option>
+          <option value="full">Full Recon  (-sV -O -A) [root]</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Port Range</label>
+        <input id="s-ports" value="1-1000"/>
+      </div>
+      <button class="btn btn-p" id="btn-scan" onclick="startScan()">▶ RUN SCAN</button>
+      <button class="btn btn-ghost" onclick="clearScan()">✕ Clear</button>
+    </div>
+    <div class="prog-wrap" id="prog">
+      <div class="prog-lbl" id="prog-lbl">Launching nmap...</div>
+      <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:30%"></div></div>
+    </div>
+  </div>
+
+  <div class="card-hdr" style="background:var(--card);border-radius:7px 7px 0 0;
+    border:1px solid var(--border);border-bottom:none;font-size:.8rem;">
+    📟 Live Terminal Output
+    <span style="font-size:.68rem;color:var(--muted);font-family:var(--mono)">
+      Streaming from nmap subprocess
+    </span>
+  </div>
+  <div class="term" id="term">
+<span class="out">// Click RUN SCAN to execute nmap on your Kali machine</span>
+<span class="out">// Output streams here in real-time via SSE</span>
+  </div>
+</div>
+
+<!-- HOSTS -->
+<div class="panel" id="p-hosts">
+  <div class="page-title">Discovered Hosts</div>
+  <div class="page-sub">Results from nmap ping sweep + service scan</div>
+  <div class="card">
+    <div class="card-hdr">🖥️ Live Hosts
+      <button class="btn btn-ghost" style="font-size:.7rem" onclick="loadResults()">↻ Refresh</button>
+    </div>
+    <table>
+      <thead><tr>
+        <th>IP Address</th><th>Hostname</th><th>MAC / Vendor</th>
+        <th>OS</th><th>Open Ports</th><th>Status</th>
+      </tr></thead>
+      <tbody id="hosts-table">
+        <tr><td colspan="6" style="color:var(--muted);text-align:center;padding:2rem">
+          Run a scan first</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PORTS -->
+<div class="panel" id="p-ports">
+  <div class="page-title">Open Ports</div>
+  <div class="page-sub">Detected by nmap service version detection</div>
+  <div class="card">
+    <div class="card-hdr">🔌 Port Details
+      <button class="btn btn-ghost" style="font-size:.7rem" onclick="loadResults()">↻ Refresh</button>
+    </div>
+    <div id="port-grid" class="port-grid">
+      <div style="color:var(--muted);font-size:.8rem;padding:.5rem;grid-column:1/-1;text-align:center">
+        Run a scan to see ports</div>
+    </div>
+  </div>
+</div>
+
+<!-- CAPTURE -->
+<div class="panel" id="p-capture">
+  <div class="page-title">Wireshark / tshark Capture</div>
+  <div class="page-sub">Capture live packets using tshark (Wireshark CLI backend)</div>
+
+  <div class="alert alert-info">
+    ℹ tshark is Wireshark's command-line backend — same capture engine, same .pcap files.
+    Open Wireshark GUI and load <code>/tmp/netrecon_capture.pcap</code> to visualize.
+  </div>
+
+  <div class="scan-form">
+    <div class="form-row">
+      <div class="fg">
+        <label>Network Interface</label>
+        <select id="c-iface">
+          {% for iface in interfaces %}
+          <option value="{{ iface }}">{{ iface }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="fg">
+        <label>Duration (seconds)</label>
+        <input id="c-dur" type="number" value="30" min="5" max="300"/>
+      </div>
+      <button class="btn btn-g" id="btn-cap" onclick="startCapture()">⏺ START CAPTURE</button>
+      <button class="btn btn-ghost" onclick="openInWireshark()">🦈 Open in Wireshark</button>
+    </div>
+    <div class="prog-wrap" id="cap-prog">
+      <div class="prog-lbl" id="cap-lbl">Capturing packets...</div>
+      <div class="prog-track"><div class="prog-fill" id="cap-fill" style="width:50%;background:var(--green)"></div></div>
+    </div>
+  </div>
+
+  <div class="two">
+    <div>
+      <div class="card-hdr" style="background:var(--card);border-radius:7px 7px 0 0;
+        border:1px solid var(--border);border-bottom:none;font-size:.8rem;">
+        📟 Capture Log
+      </div>
+      <div class="term" id="cap-term" style="max-height:280px">
+        <span class="out">// Start a capture to see tshark output</span>
+      </div>
+    </div>
+    <div>
+      <div class="card-hdr" style="background:var(--card);border-radius:7px 7px 0 0;
+        border:1px solid var(--border);border-bottom:none;font-size:.8rem;">
+        📁 Capture File
+      </div>
+      <div class="card">
+        <div style="padding:1rem;font-family:var(--mono);font-size:.78rem">
+          <div style="color:var(--muted);margin-bottom:.5rem">Saved to:</div>
+          <div class="ca">/tmp/netrecon_capture.pcap</div>
+          <div style="margin-top:.8rem;color:var(--muted)">File size:</div>
+          <div id="pcap-size" class="cy">—</div>
+          <div style="margin-top:.8rem;color:var(--muted)">Status:</div>
+          <div id="pcap-status" style="color:var(--muted)">No capture yet</div>
+          <div style="margin-top:1rem">
+            <button class="btn btn-ghost" onclick="checkCapStatus()" style="font-size:.7rem">
+              ↻ Refresh Status
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-warn" style="margin-top:.5rem">
+    💡 After capture: open Wireshark GUI → File → Open → /tmp/netrecon_capture.pcap
+    <br/>Or run: <code>wireshark /tmp/netrecon_capture.pcap &</code>
+  </div>
+</div>
+
+<!-- ANALYZE -->
+<div class="panel" id="p-analyze">
+  <div class="page-title">Packet Analysis</div>
+  <div class="page-sub">tshark dissects your .pcap — extracts credentials, protocols, DNS, HTTP</div>
+
+  <div style="margin-bottom:1rem">
+    <button class="btn btn-p" onclick="runAnalysis()">🔬 ANALYZE PCAP</button>
+    <span style="font-size:.72rem;color:var(--muted);margin-left:.8rem;font-family:var(--mono)">
+      Reads /tmp/netrecon_capture.pcap
+    </span>
+  </div>
+
+  <div id="analysis-out">
+    <div class="alert alert-info">Run a capture first, then click Analyze PCAP</div>
+  </div>
+</div>
+
+<!-- FINDINGS -->
+<div class="panel" id="p-findings">
+  <div class="page-title">Security Findings</div>
+  <div class="page-sub">Auto-generated from nmap scan results</div>
+  <div id="findings-list">
+    <div style="color:var(--muted);text-align:center;padding:3rem;font-size:.85rem">
+      No findings yet — run a scan first
+    </div>
+  </div>
+</div>
+
+</div><!-- main -->
+</div><!-- layout -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Clock ──
+setInterval(()=>{
+  document.getElementById('clock').textContent =
+    new Date().toLocaleTimeString('en-IN',{hour12:false});
+},1000);
+
+// ── Tab Switch ──
+function tab(id, el) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('p-'+id).classList.add('active');
+  el.classList.add('active');
+}
+
+// ── Toast ──
+function toast(msg, color='var(--green)') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderColor = color;
+  t.style.color = color;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3500);
+}
+
+// ── SCAN ──
+let scanSSE = null;
+function startScan() {
+  const target = document.getElementById('s-target').value.trim();
+  const type   = document.getElementById('s-type').value;
+  const ports  = document.getElementById('s-ports').value.trim();
+  if (!target) { toast('Enter a target IP','var(--red)'); return; }
+
+  document.getElementById('btn-scan').disabled = true;
+  document.getElementById('btn-scan').textContent = '⏳ SCANNING...';
+  document.getElementById('prog').style.display = 'block';
+  document.getElementById('scan-badge').textContent = '● SCANNING';
+  document.getElementById('scan-badge').style.color = 'var(--yellow)';
+
+  const term = document.getElementById('term');
+  term.innerHTML = `<span class="cmd">$ nmap ${type === 'ping' ? '-sn' : '-sV'} ${target}</span>\n`;
+
+  fetch('/api/scan/start', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({target, scan_type: type, ports})
+  }).then(r => r.json()).then(d => {
+    if (d.error) { toast(d.error,'var(--red)'); resetScanUI(); return; }
+    streamLog();
+  }).catch(e => { toast('Flask server not running!','var(--red)'); resetScanUI(); });
+}
+
+function streamLog() {
+  if (scanSSE) scanSSE.close();
+  const term = document.getElementById('term');
+  const fill = document.getElementById('prog-fill');
+  let pct = 10;
+
+  scanSSE = new EventSource('/api/scan/log');
+  scanSSE.onmessage = e => {
+    if (e.data === '__DONE__') {
+      scanSSE.close();
+      fill.style.width = '100%';
+      fill.style.animation = 'none';
+      document.getElementById('prog-lbl').textContent = 'Scan complete ✓';
+      resetScanUI();
+      loadResults();
+      toast('✓ Scan complete — results loaded');
+      return;
+    }
+    const line = JSON.parse(e.data);
+    pct = Math.min(pct + 2, 90);
+    fill.style.width = pct + '%';
+
+    // Colour the line
+    let cls = 'out';
+    if (line.startsWith('[*]') || line.startsWith('Starting')) cls = 'info';
+    if (line.match(/open|up|found/i)) cls = 'warn';
+    if (line.match(/error|fail|denied/i)) cls = 'err';
+    if (line.match(/CRITICAL|backdoor|CVE/i)) cls = 'err';
+    if (line.startsWith('$') || line.startsWith('[+]')) cls = 'cmd';
+    document.getElementById('prog-lbl').textContent = line.substring(0,60);
+
+    term.innerHTML += `<span class="${cls}">${escHtml(line)}</span>\n`;
+    term.scrollTop = term.scrollHeight;
+  };
+  scanSSE.onerror = () => { scanSSE.close(); resetScanUI(); };
+}
+
+function resetScanUI() {
+  document.getElementById('btn-scan').disabled = false;
+  document.getElementById('btn-scan').textContent = '▶ RUN SCAN';
+  document.getElementById('scan-badge').textContent = '● IDLE';
+  document.getElementById('scan-badge').style.color = 'var(--muted)';
+}
+
+function clearScan() {
+  document.getElementById('term').innerHTML =
+    '<span class="out">// Cleared</span>';
+  document.getElementById('prog').style.display = 'none';
+}
+
+// ── LOAD RESULTS ──
+function loadResults() {
+  fetch('/api/scan/results').then(r=>r.json()).then(data => {
+    if (!data.hosts) return;
+    updateStats(data);
+    updateHostsTable(data.hosts);
+    updatePortGrid(data.hosts);
+    updateFindings(data.hosts);
+    updateHomePanel(data.hosts);
+  });
+}
+
+function updateStats(data) {
+  document.getElementById('st-hosts').textContent = data.total_hosts || 0;
+  document.getElementById('st-ports').textContent = data.total_ports || 0;
+  document.getElementById('st-time').textContent  = data.scan_time || '—';
+  const critCount = (data.hosts||[]).reduce((n,h) =>
+    n + h.ports.filter(p=>p.risk==='critical').length, 0);
+  document.getElementById('st-crit').textContent = critCount;
+  document.getElementById('badge-hosts').textContent = data.total_hosts || 0;
+  document.getElementById('badge-ports').textContent = data.total_ports || 0;
+  document.getElementById('badge-findings').textContent = critCount;
+}
+
+function updateHostsTable(hosts) {
+  const tbody = document.getElementById('hosts-table');
+  if (!hosts.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">No hosts found</td></tr>';
+    return;
+  }
+  tbody.innerHTML = hosts.map(h => {
+    const maxRisk = maxRiskOf(h.ports);
+    const chip = riskChip(maxRisk);
+    return `<tr>
+      <td>${h.ip}</td>
+      <td>${h.hostname}</td>
+      <td>${h.mac}<br/><span style="color:var(--muted);font-size:.65rem">${h.vendor}</span></td>
+      <td>${h.os}<br/><span style="color:var(--muted);font-size:.65rem">${h.os_accuracy ? h.os_accuracy+'% accuracy' : ''}</span></td>
+      <td class="ca">${h.ports.length}</td>
+      <td>${chip}</td>
+    </tr>`;
+  }).join('');
+}
+
+function updatePortGrid(hosts) {
+  const grid = document.getElementById('port-grid');
+  const allPorts = hosts.flatMap(h => h.ports.map(p => ({...p, host: h.ip})));
+  if (!allPorts.length) {
+    grid.innerHTML = '<div style="color:var(--muted);grid-column:1/-1;text-align:center;padding:1rem">No open ports found</div>';
+    return;
+  }
+  const rColor = {critical:'var(--red)',high:'var(--orange)',medium:'var(--yellow)',low:'var(--green)',info:'var(--accent)'};
+  grid.innerHTML = allPorts.map(p => `
+    <div class="port-card">
+      <div class="port-num">${p.port}</div>
+      <div class="port-svc">${p.service}</div>
+      <div class="port-ver" title="${p.version}">${p.version || '—'}</div>
+      <div class="port-risk" style="color:${rColor[p.risk]||'var(--muted)'}">
+        ● ${p.risk.toUpperCase()}</div>
+      <div style="font-size:.62rem;color:var(--muted);margin-top:2px">${p.host}</div>
+    </div>`).join('');
+}
+
+function updateFindings(hosts) {
+  const list = document.getElementById('findings-list');
+  const findings = generateFindings(hosts);
+  document.getElementById('badge-findings').textContent = findings.length;
+
+  if (!findings.length) {
+    list.innerHTML = '<div style="color:var(--muted);text-align:center;padding:3rem">No significant findings detected</div>';
+    return;
+  }
+  list.innerHTML = findings.map(f => `
+    <div class="finding ${f.severity}">
+      <div class="f-hdr">
+        <div class="f-title">${f.icon} ${f.title}</div>
+        ${riskChip(f.severity)}
+      </div>
+      <div class="f-body">${f.description}</div>
+      <div class="f-meta">${f.meta}</div>
+    </div>`).join('');
+}
+
+function updateHomePanel(hosts) {
+  // Home host summary
+  const tbody = document.getElementById('home-hosts');
+  tbody.innerHTML = hosts.slice(0,5).map(h => {
+    const maxRisk = maxRiskOf(h.ports);
+    return `<tr>
+      <td>${h.ip}</td><td>${h.hostname}</td>
+      <td class="ca">${h.ports.length}</td>
+      <td>${riskChip(maxRisk)}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="4" style="color:var(--muted);text-align:center">No hosts</td></tr>';
+
+  // Home findings
+  const findings = generateFindings(hosts).slice(0,3);
+  const container = document.getElementById('home-findings');
+  if (!findings.length) {
+    container.innerHTML = '<div style="color:var(--muted);font-size:.8rem;text-align:center;padding:1.5rem">No findings</div>';
+    return;
+  }
+  container.innerHTML = findings.map(f => `
+    <div class="finding ${f.severity}" style="margin:.4rem 0">
+      <div class="f-hdr"><div class="f-title" style="font-size:.82rem">${f.icon} ${f.title}</div>${riskChip(f.severity)}</div>
+      <div class="f-meta">${f.meta}</div>
+    </div>`).join('');
+}
+
+function generateFindings(hosts) {
+  const findings = [];
+  const knownBad = {
+    '21':  {title:'vsftpd 2.3.4 Backdoor',sev:'critical',icon:'🔴',
+      desc:'Port 21 open. If vsftpd 2.3.4 is detected, it contains a backdoor (CVE-2011-2523) — appending :) to username grants root shell.',
+      meta:'CVE-2011-2523 · CVSS 10.0 · Fix: remove vsftpd 2.3.4'},
+    '23':  {title:'Telnet — Cleartext Protocol',sev:'high',icon:'🟠',
+      desc:'Telnet transmits credentials in plaintext. Capture with Wireshark to extract username/password in plain text.',
+      meta:'No CVE · CVSS 7.5 · Fix: disable telnet, use SSH'},
+    '445': {title:'Samba RCE (username_map_script)',sev:'critical',icon:'🔴',
+      desc:'Port 445 open. Samba 3.0.20–3.0.25rc3 allows unauthenticated RCE via MS-RPC username field injection.',
+      meta:'CVE-2007-2447 · CVSS 9.3 · Fix: upgrade Samba'},
+    '512': {title:'RSH Service Active',sev:'high',icon:'🟠',
+      desc:'rexec on port 512 — legacy remote execution protocol with no encryption.',
+      meta:'Fix: disable rsh/rexec services'},
+    '1524':{title:'Ingreslock Backdoor',sev:'critical',icon:'🔴',
+      desc:'Port 1524 open — classic Metasploitable backdoor that provides a root shell.',
+      meta:'Backdoor port · Fix: firewall / remove service'},
+    '3306':{title:'MySQL Exposed',sev:'medium',icon:'🟡',
+      desc:'MySQL port open externally. Check if root login is allowed without password.',
+      meta:'Fix: bind to 127.0.0.1, enforce strong root password'},
+    '5900':{title:'VNC Server Exposed',sev:'medium',icon:'🟡',
+      desc:'VNC provides remote desktop access. Weak or no password allows full GUI control.',
+      meta:'Fix: use strong password or restrict via firewall'},
+  };
+
+  hosts.forEach(h => {
+    h.ports.forEach(p => {
+      if (knownBad[p.port]) {
+        const f = knownBad[p.port];
+        findings.push({
+          title:f.title, severity:f.sev, icon:f.icon,
+          description: f.desc,
+          meta: `Host: ${h.ip} · Port: ${p.port}/tcp · Service: ${p.version || p.service} · ${f.meta}`
+        });
+      }
+    });
+    // Check for outdated SSH
+    const ssh = h.ports.find(p=>p.port==='22');
+    if (ssh && ssh.version && ssh.version.match(/OpenSSH [1-4]\./)) {
+      findings.push({
+        title:'Outdated OpenSSH Version', severity:'medium', icon:'🟡',
+        description: `${ssh.version} has known vulnerabilities including username enumeration (CVE-2016-6515).`,
+        meta: `Host: ${h.ip} · Port: 22 · Fix: upgrade OpenSSH to 9.x`
+      });
+    }
+    // Telnet by service name too
+    const tel = h.ports.find(p=>p.service==='telnet' && p.port!=='23');
+    if (tel) {
+      findings.push({
+        title:'Telnet on Non-standard Port', severity:'high', icon:'🟠',
+        description:'Telnet found on non-standard port — cleartext auth risk.',
+        meta:`Host: ${h.ip} · Port: ${tel.port}`
+      });
+    }
+  });
+
+  // Sort: critical first
+  const order = {critical:0,high:1,medium:2,low:3,info:4};
+  findings.sort((a,b) => (order[a.severity]||5) - (order[b.severity]||5));
+  return findings;
+}
+
+// ── CAPTURE ──
+let capTimer = null;
+function startCapture() {
+  const iface = document.getElementById('c-iface').value;
+  const dur   = document.getElementById('c-dur').value;
+  document.getElementById('btn-cap').disabled = true;
+  document.getElementById('btn-cap').textContent = '⏺ CAPTURING...';
+  document.getElementById('cap-prog').style.display = 'block';
+  document.getElementById('cap-term').innerHTML =
+    `<span class="cmd">$ tshark -i ${iface} -a duration:${dur} -w /tmp/netrecon_capture.pcap</span>\n`;
+
+  // Animate progress over duration
+  let elapsed = 0;
+  const total = parseInt(dur);
+  if (capTimer) clearInterval(capTimer);
+  capTimer = setInterval(() => {
+    elapsed++;
+    const pct = Math.round((elapsed/total)*100);
+    document.getElementById('cap-fill').style.width = pct + '%';
+    document.getElementById('cap-lbl').textContent = `Capturing... ${elapsed}s / ${total}s`;
+    document.getElementById('cap-term').innerHTML +=
+      `<span class="out">  [${elapsed}s] packets captured...</span>\n`;
+    document.getElementById('cap-term').scrollTop = 999999;
+
+    if (elapsed >= total) {
+      clearInterval(capTimer);
+      document.getElementById('cap-lbl').textContent = 'Capture complete ✓';
+      document.getElementById('btn-cap').disabled = false;
+      document.getElementById('btn-cap').textContent = '⏺ START CAPTURE';
+      document.getElementById('cap-term').innerHTML +=
+        `<span class="cmd">[+] Saved to /tmp/netrecon_capture.pcap</span>\n`;
+      document.getElementById('cap-term').innerHTML +=
+        `<span class="info">[*] Open in Wireshark: wireshark /tmp/netrecon_capture.pcap</span>\n`;
+      toast('✓ Capture complete — open in Wireshark');
+      checkCapStatus();
+    }
+  }, 1000);
+
+  fetch('/api/capture/start', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({interface: iface, duration: dur})
+  }).catch(e => {
+    toast('Flask server not running!','var(--red)');
+    clearInterval(capTimer);
+    document.getElementById('btn-cap').disabled = false;
+    document.getElementById('btn-cap').textContent = '⏺ START CAPTURE';
+  });
+}
+
+function checkCapStatus() {
+  fetch('/api/capture/status').then(r=>r.json()).then(d => {
+    document.getElementById('pcap-size').textContent =
+      d.file_exists ? formatBytes(d.file_size) : '—';
+    document.getElementById('pcap-status').textContent =
+      d.running ? '● RECORDING' :
+      d.file_exists ? '● File ready — open in Wireshark' : 'No capture yet';
+    document.getElementById('pcap-status').style.color =
+      d.running ? 'var(--red)' : d.file_exists ? 'var(--green)' : 'var(--muted)';
+  }).catch(()=>{});
+}
+
+function openInWireshark() {
+  toast('Run in terminal: wireshark /tmp/netrecon_capture.pcap &', 'var(--accent)');
+}
+
+// ── ANALYZE ──
+function runAnalysis() {
+  const out = document.getElementById('analysis-out');
+  out.innerHTML = '<div class="alert alert-info">⏳ Analyzing pcap file with tshark...</div>';
+  fetch('/api/capture/analyze').then(r=>r.json()).then(data => {
+    if (data.error) {
+      out.innerHTML = `<div class="alert alert-err">❌ ${data.error}</div>`;
+      return;
+    }
+    out.innerHTML = `
+      <div class="stats" style="grid-template-columns:repeat(2,1fr)">
+        <div class="stat"><div class="stat-lbl">Total Packets</div>
+          <div class="stat-val ca">${data.packet_count || '—'}</div></div>
+        <div class="stat"><div class="stat-lbl">Pcap File</div>
+          <div class="stat-val" style="font-size:.85rem;color:var(--muted)">/tmp/netrecon_capture.pcap</div></div>
+      </div>
+      ${section('Protocol Hierarchy', data.protocol_hierarchy)}
+      ${section('HTTP Requests', data.http_requests)}
+      ${section('FTP Commands (Cleartext!)', data.ftp_commands)}
+      ${section('Telnet Data (Cleartext!)', data.telnet_data)}
+      ${section('DNS Queries', data.dns_queries)}
+      ${section('IP Conversations', data.conversations)}
+    `;
+  }).catch(()=>{
+    out.innerHTML = '<div class="alert alert-err">❌ Flask server not running</div>';
+  });
+}
+
+function section(title, content) {
+  return `
+    <div class="card-hdr" style="background:var(--card);border:1px solid var(--border);
+      border-bottom:none;border-radius:7px 7px 0 0;font-size:.8rem;margin-top:.8rem">
+      📄 ${title}</div>
+    <div class="term" style="border-radius:0 0 7px 7px;border-top:none;max-height:200px">
+      <span class="out">${escHtml(content || 'No data')}</span>
+    </div>`;
+}
+
+// ── HELPERS ──
+function maxRiskOf(ports) {
+  const order = ['critical','high','medium','low','info'];
+  for (const r of order) if (ports.some(p=>p.risk===r)) return r;
+  return 'info';
+}
+function riskChip(r) {
+  const map = {
+    critical:'<span class="chip chip-crit">● CRITICAL</span>',
+    high:    '<span class="chip chip-down">● HIGH</span>',
+    medium:  '<span class="chip chip-warn">● MEDIUM</span>',
+    low:     '<span class="chip chip-up">● LOW</span>',
+    info:    '<span class="chip chip-info">● INFO</span>',
+  };
+  return map[r] || map.info;
+}
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(2) + ' MB';
+}
+
+// Init
+checkCapStatus();
+</script>
+</body>
+</html>
