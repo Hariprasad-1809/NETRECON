@@ -330,18 +330,6 @@ Always run your lab in an isolated VirtualBox NAT Network.
 
 ---
 
-## Roadmap — Future Upgrades
-
-This project is designed to grow with the 8-week Ethical Hacking Roadmap:
-
-| Week | Planned Upgrade |
-|---|---|
-| Week 3–4 | Web vulnerability scanner (SQLi, XSS detection via requests) |
-| Week 5–6 | Live packet streaming to browser via WebSocket |
-| Week 5–6 | SQLite database — save all scan history across sessions |
-| Week 7–8 | User login system + HTTPS |
-| Week 7–8 | Agent + central server architecture (like Nessus) |
-| Post-course | GitHub open source release + portfolio presentation |
 
 ---
 
@@ -359,11 +347,4 @@ This project is designed to grow with the 8-week Ethical Hacking Roadmap:
 
 ---
 
-## Author
 
-**[Your Name]**
-Ethical Hacking Roadmap — Week 1 & 2 Capstone Project
-June 2025
-
-*Built using only tools from Weeks 1 and 2: Kali Linux, Nmap, Wireshark.*
-*Flask and HTML are a bonus layer to make results visual and presentable.*
